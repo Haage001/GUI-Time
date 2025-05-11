@@ -1,0 +1,11 @@
+{
+	"required": true,
+	"package": "haage.gui_time.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"ExampleMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
