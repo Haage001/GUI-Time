@@ -70,8 +70,28 @@ public class GUITimeClient implements ClientModInitializer {
 
             boolean isRight  = (corner == GuiTimeConfig.Corner.TOP_RIGHT ||
                     corner == GuiTimeConfig.Corner.BOTTOM_RIGHT);
-            boolean canSleep = (dayTicks >= 12541L && dayTicks <= 23458L);
-            boolean warnSoon = (dayTicks >= 11541L && dayTicks < 12541L);
+
+
+            boolean isThundering = client.world.isThundering();
+            boolean isRaining = client.world.isRaining();
+
+            boolean canSleep = isThundering ||
+                    (isRaining && (dayTicks >= 12030L || dayTicks <= 0L)) ||
+                    (!isRaining && !isThundering && (dayTicks >= 12540L && dayTicks <= 23458L));
+
+            boolean warnSoon = !canSleep && !isThundering && (
+                    (isRaining && dayTicks >= 11030L && dayTicks < 12030L) ||
+                            (!isRaining && dayTicks >= 11530L && dayTicks < 12540L)
+            );
+
+
+
+
+
+
+
+
+
 
             // draw sequence
             int x = groupX;

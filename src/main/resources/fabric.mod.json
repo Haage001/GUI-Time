@@ -7,6 +7,7 @@
 	"authors": [ "Haage!" ],
 	"contact": {
 		"homepage": "https://modrinth.com/project/sn69y69I",
+		"issues": "https://github.com/Haage001/GUI-Time/issues",
 		"sources": "https://github.com/Haage001/GUI-Time"
 	},
 	"license": "MIT",
