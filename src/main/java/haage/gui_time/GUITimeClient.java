@@ -7,6 +7,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 
 import java.util.Locale;
 
@@ -29,51 +30,13 @@ public class GUITimeClient implements ClientModInitializer {
     public void onInitializeClient() {
         HudRenderCallback.EVENT.register((DrawContext ctx, RenderTickCounter tick) -> {
             MinecraftClient client = MinecraftClient.getInstance();
-            int sw = client.getWindow().getScaledWidth();
-            int sh = client.getWindow().getScaledHeight();
+            if (client.world == null || client.player == null) return;
 
-            GuiTimeConfig cfg         = GuiTimeConfig.get();
-            GuiTimeConfig.Corner corner = cfg.corner;
-            GuiTimeConfig.DisplayMode mode = cfg.displayMode;
-
-            // Precompute widths
-            int textW = client.textRenderer.getWidth("00:00");
-            boolean wantExcl = cfg.showSleepIndicator;
-            int iconW = (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) ? 16 : 0;
-            int exclW = wantExcl ? 6 : 0;
-            int gap   = 2;
-
-            // total group width
-            int groupW = 0;
-            if (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) groupW += iconW;
-            if (exclW > 0)                                                                                  groupW += gap + exclW;
-            if (mode == GuiTimeConfig.DisplayMode.TIME_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) groupW += gap + textW;
-
-            // origin
-            int groupX, groupY;
-            switch (corner) {
-                case TOP_LEFT:
-                    groupX = 10;               groupY = 10;               break;
-                case TOP_RIGHT:
-                    groupX = sw - 10 - groupW; groupY = 10;               break;
-                case BOTTOM_LEFT:
-                    groupX = 10;               groupY = sh - 10 - 16;     break;
-                default: // BOTTOM_RIGHT
-                    groupX = sw - 10 - groupW; groupY = sh - 10 - 16;     break;
-            }
-
-            // clock frame
-            long dayTicks = client.world.getTimeOfDay() % 24000L;
-            float partial = tick.getTickProgress(false);
-            float prog    = (dayTicks + partial) / 24000f;
-            int frame     = ((int)(prog * FRAME_COUNT)) & (FRAME_COUNT - 1);
-
-            boolean isRight  = (corner == GuiTimeConfig.Corner.TOP_RIGHT ||
-                    corner == GuiTimeConfig.Corner.BOTTOM_RIGHT);
-
-
+            // Centralized checks
+            boolean inOverworld = client.world.getRegistryKey().equals(World.OVERWORLD);
             boolean isThundering = client.world.isThundering();
             boolean isRaining = client.world.isRaining();
+            long dayTicks = client.world.getTimeOfDay() % 24000L;
 
             boolean canSleep = isThundering ||
                     (isRaining && (dayTicks >= 12030L || dayTicks <= 0L)) ||
@@ -81,61 +44,86 @@ public class GUITimeClient implements ClientModInitializer {
 
             boolean warnSoon = !canSleep && !isThundering && (
                     (isRaining && dayTicks >= 11030L && dayTicks < 12030L) ||
-                            (!isRaining && dayTicks >= 11530L && dayTicks < 12540L)
+                    (!isRaining && dayTicks >= 11530L && dayTicks < 12540L)
             );
 
+            GuiTimeConfig cfg = GuiTimeConfig.get();
+            GuiTimeConfig.Corner corner = cfg.corner;
+            GuiTimeConfig.DisplayMode mode = cfg.displayMode;
 
+            int sw = client.getWindow().getScaledWidth();
+            int sh = client.getWindow().getScaledHeight();
 
+            int textW = client.textRenderer.getWidth("00:00");
+            boolean wantExcl = cfg.showSleepIndicator && inOverworld;
 
+            int iconW = (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) ? 16 : 0;
+            int exclW = wantExcl ? 6 : 0;
+            int gap = 2;
 
+            int groupW = 0;
+            if (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) groupW += iconW;
+            if (exclW > 0) groupW += gap + exclW;
+            if (mode == GuiTimeConfig.DisplayMode.TIME_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) groupW += gap + textW;
 
+            int groupX, groupY;
+            switch (corner) {
+                case TOP_LEFT:
+                    groupX = 10; groupY = 10; break;
+                case TOP_RIGHT:
+                    groupX = sw - 10 - groupW; groupY = 10; break;
+                case BOTTOM_LEFT:
+                    groupX = 10; groupY = sh - 10 - 16; break;
+                default:
+                    groupX = sw - 10 - groupW; groupY = sh - 10 - 16; break;
+            }
 
+            float partial = tick.getTickProgress(false);
+            float prog = (dayTicks + partial) / 24000f;
+            int frame = ((int)(prog * FRAME_COUNT)) & (FRAME_COUNT - 1);
 
+            boolean isRight = (corner == GuiTimeConfig.Corner.TOP_RIGHT || corner == GuiTimeConfig.Corner.BOTTOM_RIGHT);
 
-
-            // draw sequence
             int x = groupX;
             if (!isRight) {
-                // left side: clock -> (warnSoon?icon2:sleep?icon1) -> time
                 if (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) {
-                    ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, CLOCK_FRAMES[frame], x, groupY, 0f,0f,16,16,16,16);
+                    ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, CLOCK_FRAMES[frame], x, groupY, 0f, 0f, 16, 16, 16, 16);
                     x += iconW + gap;
                 }
                 if (wantExcl) {
                     if (warnSoon) {
-                        ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, EXCL_ICON2, x, groupY, 0f,0f,exclW,16,exclW,16);
+                        ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, EXCL_ICON2, x, groupY, 0f, 0f, exclW, 16, exclW, 16);
                     } else if (canSleep) {
-                        ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, EXCL_ICON,  x, groupY, 0f,0f,exclW,16,exclW,16);
+                        ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, EXCL_ICON, x, groupY, 0f, 0f, exclW, 16, exclW, 16);
                     }
                 }
                 x += exclW + gap;
                 if (mode == GuiTimeConfig.DisplayMode.TIME_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) {
                     String timeText = String.format(Locale.ROOT, "%02d:%02d",
-                            (int)(((dayTicks/1000f)+6f)%24f),
-                            (int)((((dayTicks/1000f)+6f)%1f)*60f)
+                            (int)(((dayTicks / 1000f) + 6f) % 24f),
+                            (int)((((dayTicks / 1000f) + 6f) % 1f) * 60f)
                     );
                     ctx.drawText(client.textRenderer, timeText, x, groupY + 4, 0xFFFFFF, true);
                 }
             } else {
-                // right side: time -> indicator -> clock
                 if (mode == GuiTimeConfig.DisplayMode.TIME_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) {
                     String timeText = String.format(Locale.ROOT, "%02d:%02d",
-                            (int)(((dayTicks/1000f)+6f)%24f),
-                            (int)((((dayTicks/1000f)+6f)%1f)*60f)
+                            (int)(((dayTicks / 1000f) + 6f) % 24f),
+                            (int)((((dayTicks / 1000f) + 6f) % 1f) * 60f)
                     );
                     ctx.drawText(client.textRenderer, timeText, x, groupY + 4, 0xFFFFFF, true);
                     x += textW + gap;
                 }
                 if (wantExcl) {
                     if (warnSoon) {
-                        ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, EXCL_ICON2, x, groupY, 0f,0f,exclW,16,exclW,16);
+                        ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, EXCL_ICON2, x, groupY, 0f, 0f, exclW, 16, exclW, 16);
                     } else if (canSleep) {
-                        ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, EXCL_ICON,  x, groupY, 0f,0f,exclW,16,exclW,16);
+                        ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, EXCL_ICON, x, groupY, 0f, 0f, exclW, 16, exclW, 16);
                     }
                 }
                 x += exclW + gap;
                 if (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) {
-                    ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, CLOCK_FRAMES[frame], x, groupY, 0f,0f,16,16,16,16);
+                    ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, CLOCK_FRAMES[frame], x, groupY, 0f, 0f, 16, 16, 16, 16);
                 }
             }
         });
