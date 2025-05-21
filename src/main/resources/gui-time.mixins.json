@@ -3,6 +3,7 @@
 	"package": "haage.gui_time.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"GUITimeClientMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

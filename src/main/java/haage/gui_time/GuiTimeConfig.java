@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Holds the user’s HUD-corner choice, DisplayMode, and sleep-indicator toggle,
+ * Holds the user’s HUD-corner choice, DisplayMode, sleep/phantom-indicator toggles,
  * reads/writes them to config/gui-time.json in the Fabric config folder.
  */
 public class GuiTimeConfig {
@@ -29,7 +29,7 @@ public class GuiTimeConfig {
 
     /** What to show in the HUD */
     public enum DisplayMode {
-        NONE,       // ← NEW: nothing but sleep indicator if enabled
+        NONE,       // ← nothing but sleep/phantom indicators if enabled
         ICON_ONLY,
         TIME_ONLY,
         BOTH
@@ -38,11 +38,17 @@ public class GuiTimeConfig {
     /** The HUD corner choice, written/read as JSON */
     public Corner corner = Corner.BOTTOM_RIGHT;
 
-    /** What to show: icon, time, both, or none (for sleep-only) */
+    /** What to show: icon, time, both, or none (for indicators-only) */
     public DisplayMode displayMode = DisplayMode.BOTH;
 
     /** Show a red “!” when the player can sleep */
     public boolean showSleepIndicator = true;
+
+    /** Show a phantom icon once 72 000 ticks have passed since last sleep */
+    public boolean showPhantomIndicator = true;
+
+    /** Number of ticks without sleeping before debug test triggers the phantom icon */
+    public int phantomThresholdTicks = 72000;
 
     /** Accessor; loads from disk on first call. */
     public static GuiTimeConfig get() {

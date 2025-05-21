@@ -58,7 +58,7 @@ public class GuiTimeConfigScreen {
                         })
                         .setTooltipSupplier(mode -> Optional.of(new Text[]{
                                 switch ((GuiTimeConfig.DisplayMode)mode) {
-                                    case NONE      -> Text.literal("Hide both clock and time; show only the sleep indicator if enabled.");
+                                    case NONE      -> Text.literal("Hide both clock and time; show only the sleep and phantom indicators if enabled.");
                                     case ICON_ONLY -> Text.literal("Only the analog clock icon will be shown.");
                                     case TIME_ONLY -> Text.literal("Only the digital clock will be shown.");
                                     case BOTH      -> Text.literal("Both the icon and the digital clock will be shown.");
@@ -74,9 +74,24 @@ public class GuiTimeConfigScreen {
                                 GuiTimeConfig.get().showSleepIndicator
                         )
                         .setDefaultValue(true)
-                        .setTooltip(Text.literal("When on, a red “!” will appear if you can sleep."))
+                        .setTooltip(Text.literal("When on, a red '!' will appear if you can sleep."))
                         .setSaveConsumer(val -> {
                             GuiTimeConfig.get().showSleepIndicator = val;
+                            GuiTimeConfig.save();
+                        })
+                        .build()
+        );
+
+        // Phantom indicator toggle
+        general.addEntry(
+                entryBuilder.startBooleanToggle(
+                                Text.literal("Show Phantom Indicator"),
+                                GuiTimeConfig.get().showPhantomIndicator
+                        )
+                        .setDefaultValue(true)
+                        .setTooltip(Text.literal("When on, a phantom icon will appear once you've gone 72,000 ticks without sleeping and it's night."))
+                        .setSaveConsumer(val -> {
+                            GuiTimeConfig.get().showPhantomIndicator = val;
                             GuiTimeConfig.save();
                         })
                         .build()
