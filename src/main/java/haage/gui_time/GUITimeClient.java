@@ -118,6 +118,7 @@ public class GUITimeClient implements ClientModInitializer {
             switch (corner) {
                 case TOP_LEFT:     groupX = 10;                    groupY = 10;                break;
                 case TOP_RIGHT:    groupX = sw - 10 - groupW;      groupY = 10;                break;
+                case TOP_CENTER:   groupX = (sw - groupW)/2;       groupY = 10;                break;
                 case BOTTOM_LEFT:  groupX = 10;                    groupY = sh - 10 - 16;      break;
                 default:           groupX = sw - 10 - groupW;      groupY = sh - 10 - 16;      break;
             }

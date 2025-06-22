@@ -22,6 +22,7 @@ public class GuiTimeConfig {
     /** All four corners for the HUD */
     public enum Corner {
         TOP_LEFT,
+        TOP_CENTER,
         TOP_RIGHT,
         BOTTOM_LEFT,
         BOTTOM_RIGHT

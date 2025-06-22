@@ -28,6 +28,7 @@ public class GuiTimeConfigScreen {
                         .setEnumNameProvider(corner -> switch ((GuiTimeConfig.Corner)corner) {
                             case TOP_LEFT -> Text.literal("Top Left");
                             case TOP_RIGHT -> Text.literal("Top Right");
+                            case TOP_CENTER -> Text.literal("Top Center");
                             case BOTTOM_LEFT -> Text.literal("Bottom Left");
                             case BOTTOM_RIGHT -> Text.literal("Bottom Right");
                         })
