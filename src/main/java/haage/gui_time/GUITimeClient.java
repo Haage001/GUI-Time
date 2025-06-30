@@ -4,6 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.option.KeyBinding;
@@ -48,7 +49,7 @@ public class GUITimeClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // ─── Debug keybinding to trigger phantom icon for testing ─────────────
+       /* // ─── Debug keybinding to trigger phantom icon for testing ─────────────
         KeyBinding testPhantomKey = KeyBindingHelper.registerKeyBinding(
                 new KeyBinding(
                         "key.guitime.test_phantom",
@@ -56,19 +57,24 @@ public class GUITimeClient implements ClientModInitializer {
                         GLFW.GLFW_KEY_P,
                         "category.guitime.debug"
                 )
-        );
+        ); */
 
         // ─── Increment our local counter every client tick ─────────────────────
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (testPhantomKey.wasPressed()) {
+           /* if (testPhantomKey.wasPressed()) {
                 int threshold = GuiTimeConfig.get().phantomThresholdTicks;
                 ticksSinceRest = threshold;
                 client.player.sendMessage(Text.literal("[GUI Time] Phantom test triggered!"), false);
-            }
-            if (client.world != null && client.player != null && !client.player.isSleeping()) {
-                ticksSinceRest++;
+            } */
+            if (client.world != null && client.player != null) {
+                if (client.player.isSleeping()) {
+                    ticksSinceRest = 0;
+                } else {
+                    ticksSinceRest++;
+                }
             }
         });
+
 
         // ─── HUD rendering ────────────────────────────────────────────────────
         HudRenderCallback.EVENT.register((DrawContext ctx, RenderTickCounter tick) -> {
@@ -118,6 +124,7 @@ public class GUITimeClient implements ClientModInitializer {
             switch (corner) {
                 case TOP_LEFT:     groupX = 10;                    groupY = 10;                break;
                 case TOP_RIGHT:    groupX = sw - 10 - groupW;      groupY = 10;                break;
+                case TOP_CENTER: groupX = (sw - groupW)/2; groupY = 10; break;
                 case BOTTOM_LEFT:  groupX = 10;                    groupY = sh - 10 - 16;      break;
                 default:           groupX = sw - 10 - groupW;      groupY = sh - 10 - 16;      break;
             }
@@ -132,20 +139,20 @@ public class GUITimeClient implements ClientModInitializer {
             if (!right) {
                 // Clock icon
                 if (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) {
-                    ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, CLOCK_FRAMES[frame], x, groupY, 0, 0, 16, 16, 16, 16);
+                    ctx.drawTexture(RenderPipelines.GUI_TEXTURED, CLOCK_FRAMES[frame], x, groupY, 0, 0, 16, 16, 16, 16);
                     x += iconW + gap;
                 }
                 // Phantom indicator
                 if (cfg.showPhantomIndicator && inOverworld && isNight && ticksSinceRest >= cfg.phantomThresholdTicks) {
-                    ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, PHANTOM_ICON, x, groupY, 0, 0, phantomW, phantomW, phantomW, phantomW);
+                    ctx.drawTexture(RenderPipelines.GUI_TEXTURED, PHANTOM_ICON, x, groupY, 0, 0, phantomW, phantomW, phantomW, phantomW);
                     x += phantomW + gap;
                 }
                 // Sleep indicator
                 if (wantExcl) {
                     if (warnSoon) {
-                        ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, EXCL_ICON2, x, groupY, 0, 0, exclW, 16, exclW, 16);
+                        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, EXCL_ICON2, x, groupY, 0, 0, exclW, 16, exclW, 16);
                     } else if (canSleep) {
-                        ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, EXCL_ICON, x, groupY, 0, 0, exclW, 16, exclW, 16);
+                        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, EXCL_ICON, x, groupY, 0, 0, exclW, 16, exclW, 16);
                     }
                 }
                 x += exclW + gap;
@@ -155,7 +162,7 @@ public class GUITimeClient implements ClientModInitializer {
                             (int)(((dayTicks / 1000f) + 6f) % 24f),
                             (int)((((dayTicks / 1000f) + 6f) % 1f) * 60f)
                     );
-                    ctx.drawText(tr, timeText, x, groupY + 4, 0xFFFFFF, true);
+                    ctx.drawText(tr, timeText, x, groupY + 4, 0xFFFFFFFF, true);
                 }
             } else {
                 // Digital time
@@ -164,26 +171,26 @@ public class GUITimeClient implements ClientModInitializer {
                             (int)(((dayTicks / 1000f) + 6f) % 24f),
                             (int)((((dayTicks / 1000f) + 6f) % 1f) * 60f)
                     );
-                    ctx.drawText(tr, timeText, x, groupY + 4, 0xFFFFFF, true);
+                    ctx.drawText(tr, timeText, x, groupY + 4, 0xFFFFFFFF, true);
                     x += textW + gap;
                 }
                 // Sleep indicator
                 if (wantExcl) {
                     if (warnSoon) {
-                        ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, EXCL_ICON2, x, groupY, 0, 0, exclW, 16, exclW, 16);
+                        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, EXCL_ICON2, x, groupY, 0, 0, exclW, 16, exclW, 16);
                     } else if (canSleep) {
-                        ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, EXCL_ICON, x, groupY, 0, 0, exclW, 16, exclW, 16);
+                        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, EXCL_ICON, x, groupY, 0, 0, exclW, 16, exclW, 16);
                     }
                 }
                 x += exclW + gap;
                 // Phantom indicator
                 if (cfg.showPhantomIndicator && inOverworld && isNight && ticksSinceRest >= cfg.phantomThresholdTicks) {
-                    ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, PHANTOM_ICON, x, groupY, 0, 0, phantomW, phantomW, phantomW, phantomW);
+                    ctx.drawTexture(RenderPipelines.GUI_TEXTURED, PHANTOM_ICON, x, groupY, 0, 0, phantomW, phantomW, phantomW, phantomW);
                     x += phantomW + gap;
                 }
                 // Clock icon
                 if (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) {
-                    ctx.drawTexture(RenderLayer::getGuiTexturedOverlay, CLOCK_FRAMES[frame], x, groupY, 0, 0, 16, 16, 16, 16);
+                    ctx.drawTexture(RenderPipelines.GUI_TEXTURED, CLOCK_FRAMES[frame], x, groupY, 0, 0, 16, 16, 16, 16);
                 }
             }
         });
