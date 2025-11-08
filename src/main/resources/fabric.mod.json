@@ -1,10 +1,10 @@
 {
 	"schemaVersion": 1,
 	"id": "gui-time",
-	"version": "1.4.1",
+	"version": "1.5.0",
 	"name": "GUI Time",
 	"description": "Displays both the vanilla clock and a 24-hour digital clock HUD and an optional sleep indicator to show when you can sleep..",
-	"authors": [ "Haage!" ],
+	"authors": [ "Haage" ],
 	"contact": {
 		"homepage": "https://modrinth.com/project/sn69y69I",
 		"issues": "https://github.com/Haage001/GUI-Time/issues",
@@ -34,8 +34,8 @@
 	],
 
 	"depends": {
-		"fabricloader": ">=0.16.14",
-		"minecraft": "~1.21.5",
+		"fabricloader": ">=0.17.3",
+		"minecraft": "~1.21.10",
 		"java": ">=21",
 		"fabric-api": "*",
 		"cloth-config": "*"

@@ -1,44 +1,28 @@
 package haage.gui_time;
 
+import java.util.Locale;
+
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.text.Text;
-import net.minecraft.stat.Stat;
-import net.minecraft.stat.Stats;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.LodestoneTrackerComponent;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
-import org.lwjgl.glfw.GLFW;
-
-import java.util.Locale;
-import java.util.Map;
 
 public class GUITimeClient implements ClientModInitializer {
-    private static final int FRAME_COUNT = 64;
-    private static final Identifier[] CLOCK_FRAMES = new Identifier[FRAME_COUNT];
     private static final Identifier EXCL_ICON    = Identifier.of(GUITime.MOD_ID, "textures/gui/exclamation.png");
     private static final Identifier EXCL_ICON2   = Identifier.of(GUITime.MOD_ID, "textures/gui/exclamation_2.png");
     private static final Identifier PHANTOM_ICON = Identifier.of(GUITime.MOD_ID, "textures/gui/phantom.png");
     /** Local counter of ticks since last sleep, set by mixin */
     private static int ticksSinceRest = 0;
-
-    static {
-        for (int i = 0; i < FRAME_COUNT; i++) {
-            CLOCK_FRAMES[i] = Identifier.of(
-                    GUITime.MOD_ID,
-                    String.format("textures/gui/clock_%02d.png", i)
-            );
-        }
-    }
 
     /**
      * Called from a mixin when the server sends a fresh Statistics packet.
@@ -129,17 +113,17 @@ public class GUITimeClient implements ClientModInitializer {
                 default:           groupX = sw - 10 - groupW;      groupY = sh - 10 - 16;      break;
             }
 
-            float partial = tick.getTickProgress(false);
-            float prog    = (dayTicks + partial) / 24000f;
-            int frame     = ((int)(prog * FRAME_COUNT)) & (FRAME_COUNT - 1);
-
+            // Create a clock ItemStack with the current world time for proper texture display
+            ItemStack clockStack = new ItemStack(Items.CLOCK);
+            clockStack.set(DataComponentTypes.LODESTONE_TRACKER, new LodestoneTrackerComponent(null, false));
+            
             boolean right = (corner == GuiTimeConfig.Corner.TOP_RIGHT || corner == GuiTimeConfig.Corner.BOTTOM_RIGHT);
             int x = groupX;
 
             if (!right) {
-                // Clock icon
+                // Clock icon - render the actual in-game clock item
                 if (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) {
-                    ctx.drawTexture(RenderPipelines.GUI_TEXTURED, CLOCK_FRAMES[frame], x, groupY, 0, 0, 16, 16, 16, 16);
+                    ctx.drawItem(clockStack, x, groupY);
                     x += iconW + gap;
                 }
                 // Phantom indicator
@@ -188,9 +172,9 @@ public class GUITimeClient implements ClientModInitializer {
                     ctx.drawTexture(RenderPipelines.GUI_TEXTURED, PHANTOM_ICON, x, groupY, 0, 0, phantomW, phantomW, phantomW, phantomW);
                     x += phantomW + gap;
                 }
-                // Clock icon
+                // Clock icon - render the actual in-game clock item
                 if (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) {
-                    ctx.drawTexture(RenderPipelines.GUI_TEXTURED, CLOCK_FRAMES[frame], x, groupY, 0, 0, 16, 16, 16, 16);
+                    ctx.drawItem(clockStack, x, groupY);
                 }
             }
         });
