@@ -31,15 +31,11 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-
-	// Fabric Renderer API v1 (provides the DrawContext-based HudRenderCallback)
-	modImplementation "net.fabricmc.fabric-api:fabric-renderer-api-v1:${project.fabric_version}"
-
-	// Cloth Config (in-game config screens)
-	modApi("me.shedaniel.cloth:cloth-config-fabric:19.0.147") {
+	// Cloth Config (optional - used at compile time only, not bundled)
+	modCompileOnly("me.shedaniel.cloth:cloth-config-fabric:19.0.147") {
 		exclude group: "net.fabricmc.fabric-api"
 	}
 
-	// ModMenu (adds "Configure" button)
-	modApi "com.terraformersmc:modmenu:16.0.0-rc.1"
+	// ModMenu (optional - used at compile time only, not bundled)
+	modCompileOnly "com.terraformersmc:modmenu:16.0.0-rc.1"
 }
