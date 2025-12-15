@@ -63,7 +63,7 @@ public class GUITimeClient implements ClientModInitializer {
         // ─── HUD rendering ────────────────────────────────────────────────────
         HudRenderCallback.EVENT.register((DrawContext ctx, RenderTickCounter tick) -> {
             MinecraftClient client = MinecraftClient.getInstance();
-            if (client.world == null || client.player == null) return;
+            if (client.world == null || client.player == null || client.options.hudHidden) return;
 
             // World/time state
             boolean inOverworld  = client.world.getRegistryKey().equals(World.OVERWORLD);

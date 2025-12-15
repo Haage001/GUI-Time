@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "gui-time",
-	"version": "1.5.0-rc2",
+	"version": "${version}",
 	"name": "GUI Time",
 	"description": "Displays both the vanilla clock and a 24-hour digital clock HUD and an optional sleep indicator to show when you can sleep..",
 	"authors": [ "Haage" ],
