@@ -1,26 +1,27 @@
 package haage.gui_time;
 
 import java.util.Locale;
+import java.util.Optional;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.LodestoneTrackerComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.LodestoneTracker;
+import net.minecraft.world.level.Level;
 
 public class GUITimeClient implements ClientModInitializer {
-    private static final Identifier EXCL_ICON    = Identifier.of(GUITime.MOD_ID, "textures/gui/exclamation.png");
-    private static final Identifier EXCL_ICON2   = Identifier.of(GUITime.MOD_ID, "textures/gui/exclamation_2.png");
-    private static final Identifier PHANTOM_ICON = Identifier.of(GUITime.MOD_ID, "textures/gui/phantom.png");
+    private static final Identifier EXCL_ICON    = Identifier.fromNamespaceAndPath(GUITime.MOD_ID, "textures/gui/exclamation.png");
+    private static final Identifier EXCL_ICON2   = Identifier.fromNamespaceAndPath(GUITime.MOD_ID, "textures/gui/exclamation_2.png");
+    private static final Identifier PHANTOM_ICON = Identifier.fromNamespaceAndPath(GUITime.MOD_ID, "textures/gui/phantom.png");
     /** Local counter of ticks since last sleep, set by mixin */
     private static int ticksSinceRest = 0;
 
@@ -50,7 +51,7 @@ public class GUITimeClient implements ClientModInitializer {
                 ticksSinceRest = threshold;
                 client.player.sendMessage(Text.literal("[GUI Time] Phantom test triggered!"), false);
             } */
-            if (client.world != null && client.player != null) {
+            if (client.level != null && client.player != null) {
                 if (client.player.isSleeping()) {
                     ticksSinceRest = 0;
                 } else {
@@ -61,16 +62,16 @@ public class GUITimeClient implements ClientModInitializer {
 
 
         // ─── HUD rendering ────────────────────────────────────────────────────
-        HudRenderCallback.EVENT.register((DrawContext ctx, RenderTickCounter tick) -> {
-            MinecraftClient client = MinecraftClient.getInstance();
-            if (client.world == null || client.player == null || client.options.hudHidden) return;
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(GUITime.MOD_ID, "hud"), (GuiGraphicsExtractor ctx, DeltaTracker tick) -> {
+            Minecraft client = Minecraft.getInstance();
+            if (client.level == null || client.player == null || client.options.hideGui) return;
 
             // World/time state
-            boolean inOverworld  = client.world.getRegistryKey().equals(World.OVERWORLD);
-            long dayTicks        = client.world.getTimeOfDay() % 24000L;
+            boolean inOverworld  = client.level.dimension().equals(Level.OVERWORLD);
+            long dayTicks        = client.level.getOverworldClockTime() % 24000L;
             boolean isNight      = (dayTicks >= 12540L && dayTicks <= 23458L);
-            boolean isThundering = client.world.isThundering();
-            boolean isRaining    = client.world.isRaining();
+            boolean isThundering = client.level.isThundering();
+            boolean isRaining    = client.level.isRaining();
 
             // Sleep logic
             boolean canSleep = isThundering ||
@@ -85,11 +86,11 @@ public class GUITimeClient implements ClientModInitializer {
             GuiTimeConfig.Corner corner  = cfg.corner;
             GuiTimeConfig.DisplayMode mode = cfg.displayMode;
 
-            int sw = client.getWindow().getScaledWidth();
-            int sh = client.getWindow().getScaledHeight();
+            int sw = ctx.guiWidth();
+            int sh = ctx.guiHeight();
 
-            TextRenderer tr   = client.textRenderer;
-            int textW    = tr.getWidth("00:00");
+            Font tr   = client.font;
+            int textW    = tr.width("00:00");
             boolean wantExcl      = cfg.showSleepIndicator && inOverworld;
             int iconW            = (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) ? 16 : 0;
             int exclW            = wantExcl ? 6  : 0;
@@ -115,7 +116,7 @@ public class GUITimeClient implements ClientModInitializer {
 
             // Create a clock ItemStack with the current world time for proper texture display
             ItemStack clockStack = new ItemStack(Items.CLOCK);
-            clockStack.set(DataComponentTypes.LODESTONE_TRACKER, new LodestoneTrackerComponent(null, false));
+            clockStack.set(DataComponents.LODESTONE_TRACKER, new LodestoneTracker(Optional.empty(), false));
             
             boolean right = (corner == GuiTimeConfig.Corner.TOP_RIGHT || corner == GuiTimeConfig.Corner.BOTTOM_RIGHT);
             int x = groupX;
@@ -123,20 +124,20 @@ public class GUITimeClient implements ClientModInitializer {
             if (!right) {
                 // Clock icon - render the actual in-game clock item
                 if (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) {
-                    ctx.drawItem(clockStack, x, groupY);
+                    ctx.item(clockStack, x, groupY);
                     x += iconW + gap;
                 }
                 // Phantom indicator
                 if (cfg.showPhantomIndicator && inOverworld && isNight && ticksSinceRest >= cfg.phantomThresholdTicks) {
-                    ctx.drawTexture(RenderPipelines.GUI_TEXTURED, PHANTOM_ICON, x, groupY, 0, 0, phantomW, phantomW, phantomW, phantomW);
+                    ctx.blit(RenderPipelines.GUI_TEXTURED, PHANTOM_ICON, x, groupY, 0, 0, phantomW, phantomW, phantomW, phantomW);
                     x += phantomW + gap;
                 }
                 // Sleep indicator
                 if (wantExcl) {
                     if (warnSoon) {
-                        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, EXCL_ICON2, x, groupY, 0, 0, exclW, 16, exclW, 16);
+                        ctx.blit(RenderPipelines.GUI_TEXTURED, EXCL_ICON2, x, groupY, 0, 0, exclW, 16, exclW, 16);
                     } else if (canSleep) {
-                        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, EXCL_ICON, x, groupY, 0, 0, exclW, 16, exclW, 16);
+                        ctx.blit(RenderPipelines.GUI_TEXTURED, EXCL_ICON, x, groupY, 0, 0, exclW, 16, exclW, 16);
                     }
                 }
                 x += exclW + gap;
@@ -146,7 +147,7 @@ public class GUITimeClient implements ClientModInitializer {
                             (int)(((dayTicks / 1000f) + 6f) % 24f),
                             (int)((((dayTicks / 1000f) + 6f) % 1f) * 60f)
                     );
-                    ctx.drawText(tr, timeText, x, groupY + 4, 0xFFFFFFFF, true);
+                    ctx.text(tr, timeText, x, groupY + 4, 0xFFFFFFFF, true);
                 }
             } else {
                 // Digital time
@@ -155,26 +156,26 @@ public class GUITimeClient implements ClientModInitializer {
                             (int)(((dayTicks / 1000f) + 6f) % 24f),
                             (int)((((dayTicks / 1000f) + 6f) % 1f) * 60f)
                     );
-                    ctx.drawText(tr, timeText, x, groupY + 4, 0xFFFFFFFF, true);
+                    ctx.text(tr, timeText, x, groupY + 4, 0xFFFFFFFF, true);
                     x += textW + gap;
                 }
                 // Sleep indicator
                 if (wantExcl) {
                     if (warnSoon) {
-                        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, EXCL_ICON2, x, groupY, 0, 0, exclW, 16, exclW, 16);
+                        ctx.blit(RenderPipelines.GUI_TEXTURED, EXCL_ICON2, x, groupY, 0, 0, exclW, 16, exclW, 16);
                     } else if (canSleep) {
-                        ctx.drawTexture(RenderPipelines.GUI_TEXTURED, EXCL_ICON, x, groupY, 0, 0, exclW, 16, exclW, 16);
+                        ctx.blit(RenderPipelines.GUI_TEXTURED, EXCL_ICON, x, groupY, 0, 0, exclW, 16, exclW, 16);
                     }
                 }
                 x += exclW + gap;
                 // Phantom indicator
                 if (cfg.showPhantomIndicator && inOverworld && isNight && ticksSinceRest >= cfg.phantomThresholdTicks) {
-                    ctx.drawTexture(RenderPipelines.GUI_TEXTURED, PHANTOM_ICON, x, groupY, 0, 0, phantomW, phantomW, phantomW, phantomW);
+                    ctx.blit(RenderPipelines.GUI_TEXTURED, PHANTOM_ICON, x, groupY, 0, 0, phantomW, phantomW, phantomW, phantomW);
                     x += phantomW + gap;
                 }
                 // Clock icon - render the actual in-game clock item
                 if (mode == GuiTimeConfig.DisplayMode.ICON_ONLY || mode == GuiTimeConfig.DisplayMode.BOTH) {
-                    ctx.drawItem(clockStack, x, groupY);
+                    ctx.item(clockStack, x, groupY);
                 }
             }
         });

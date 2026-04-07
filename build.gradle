@@ -1,6 +1,6 @@
 // build.gradle
 plugins {
-	id 'fabric-loom' version "${loom_version}"
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id 'maven-publish'
 }
 
@@ -25,19 +25,18 @@ fabricApi {
 }
 
 dependencies {
-	// Minecraft, mappings, loader, core Fabric API
+	// Minecraft, loader, core Fabric API
 	minecraft        "com.mojang:minecraft:${project.minecraft_version}"
-	mappings          "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation    "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation    "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
 	// Cloth Config (optional - used at compile time only, not bundled)
-	modCompileOnly("me.shedaniel.cloth:cloth-config-fabric:19.0.147") {
+	compileOnly("me.shedaniel.cloth:cloth-config-fabric:26.1.154") {
 		exclude group: "net.fabricmc.fabric-api"
 	}
 
 	// ModMenu (optional - used at compile time only, not bundled)
-	modCompileOnly "com.terraformersmc:modmenu:16.0.0-rc.1"
+	compileOnly "com.terraformersmc:modmenu:18.0.0-alpha.8"
 }
 
 processResources {
@@ -46,4 +45,15 @@ processResources {
 	filesMatching("fabric.mod.json") {
 		expand "version": project.version
 	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }
