@@ -1,14 +1,15 @@
 package haage.gui_time;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import net.fabricmc.loader.api.FabricLoader;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import net.fabricmc.loader.api.FabricLoader;
 
 /**
  * Holds the user’s HUD-corner choice, DisplayMode, sleep/phantom-indicator toggles,
@@ -45,8 +46,8 @@ public class GuiTimeConfig {
     /** Show a red “!” when the player can sleep */
     public boolean showSleepIndicator = true;
 
-    /** Show a phantom icon once 72 000 ticks have passed since last sleep */
-    public boolean showPhantomIndicator = true;
+    /** Show a phantom icon once 72 000 ticks have passed since last sleep (disabled until feature is complete) */
+    public final boolean showPhantomIndicator = false;
 
     /** Number of ticks without sleeping before debug test triggers the phantom icon */
     public int phantomThresholdTicks = 72000;

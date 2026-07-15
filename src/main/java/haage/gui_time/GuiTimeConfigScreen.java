@@ -1,12 +1,12 @@
 package haage.gui_time;
 
+import java.util.Optional;
+
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-
-import java.util.Optional;
 
 public class GuiTimeConfigScreen {
     public static Screen create(Screen parent) {
@@ -78,21 +78,6 @@ public class GuiTimeConfigScreen {
                         .setTooltip(Component.literal("When on, a red '!' will appear if you can sleep."))
                         .setSaveConsumer(val -> {
                             GuiTimeConfig.get().showSleepIndicator = val;
-                            GuiTimeConfig.save();
-                        })
-                        .build()
-        );
-
-        // Phantom indicator toggle
-        general.addEntry(
-                entryBuilder.startBooleanToggle(
-                                Component.literal("Show Phantom Indicator"),
-                                GuiTimeConfig.get().showPhantomIndicator
-                        )
-                        .setDefaultValue(true)
-                        .setTooltip(Component.literal("When on, a phantom icon will appear once you've gone 72,000 ticks without sleeping and it's night."))
-                        .setSaveConsumer(val -> {
-                            GuiTimeConfig.get().showPhantomIndicator = val;
                             GuiTimeConfig.save();
                         })
                         .build()

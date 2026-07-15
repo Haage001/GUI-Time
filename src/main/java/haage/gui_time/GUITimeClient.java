@@ -64,7 +64,7 @@ public class GUITimeClient implements ClientModInitializer {
         // ─── HUD rendering ────────────────────────────────────────────────────
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(GUITime.MOD_ID, "hud"), (GuiGraphicsExtractor ctx, DeltaTracker tick) -> {
             Minecraft client = Minecraft.getInstance();
-            if (client.level == null || client.player == null || client.options.hideGui) return;
+            if (client.level == null || client.player == null) return;
 
             // World/time state
             boolean inOverworld  = client.level.dimension().equals(Level.OVERWORLD);

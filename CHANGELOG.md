@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.0] - 2026-07-16
+
+### Changed:
+- Updated to Minecraft 26.2
+
 ## [2.0.0] - 2026-04-07
 
 ### Changed:
@@ -14,3 +19,6 @@
 
 ### Fixed:
 - Clock and indicator icons not hiding when HUD is toggled off (F1)
+
+---
+Note: Changelog entries use three sections: Added, Changed, and Fixed. Only sections with real updates should contain bullet points.
